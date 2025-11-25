@@ -16,7 +16,9 @@ An intelligent travel planning application powered by **Multi-Agent AI** and **G
 - **Automated Search**: AI-powered searches for flights, hotels, attractions, and more
 - **Smart Itinerary Builder**: Create day-by-day schedules with AI recommendations
 - **Real-time Budget Tracking**: Monitor spending with AI-generated insights
-- **Complete Trip Planning**: One-click generation of comprehensive travel plans
+- **Complete Trip Planning**: One-click generation of comprehensive travel plans with option to apply
+- **Origin & Destination Tracking**: Specify where you're traveling from and to
+- **Multi-Currency Support**: Support for USD, EUR, GBP, INR, JPY, AUD, CAD
 - **Interactive Packing List**: Pre-populated checklist organized by categories
 - **Trip Notes**: Keep track of important information and reminders
 
@@ -63,38 +65,45 @@ The app will open in your browser at `http://localhost:8501`
 - Wait for agents to activate (green status indicators)
 
 ### 2. Set Trip Details (Sidebar)
-- Enter destination
+- Enter where you're traveling from (origin)
+- Enter your destination
 - Select start and end dates
 - Specify number of travelers
-- Set total budget and currency
+- Set total budget and select currency (USD, EUR, GBP, INR, JPY, AUD, CAD)
 
 ### 3. Use AI Assistant (Tab 1)
 Chat naturally with AI agents:
 - "What are the top 10 things to do in Paris?"
-- "Find me budget flights to Tokyo in March"
+- "Find me budget flights from Mumbai to Tokyo in March"
 - "Create a 7-day itinerary for Rome with historical sites"
 - "What's the best area to stay in Barcelona?"
-- "How should I split my $3000 budget?"
+- "How should I split my ₹200,000 budget?"
 
 **Quick Actions**:
 - **Generate Complete Itinerary**: Full AI-generated travel plan
+  - After generation, you'll be asked if you want to apply the plan
+  - Choose "Yes" to make it available in other tabs for reference
+  - The plan appears in Itinerary, Budget, and Travel Search tabs
 - **Get Destination Tips**: Personalized recommendations
 - **Budget Analysis**: Detailed financial advice
 
 ### 4. Build Manual Itinerary (Tab 2)
+- View AI-generated itinerary plan (if created)
 - Add activities with times and costs
 - Organize by day
 - Edit or delete entries as needed
 
 ### 5. Track Budget (Tab 3)
+- View AI-generated budget recommendations (if created)
 - View spending vs. remaining budget
 - See expense breakdown by day
 - Get AI-suggested allocation
 
 ### 6. AI Travel Search (Tab 4)
+- View AI-generated flight and hotel options (if created)
 - Search for flights, hotels, attractions
 - Get AI-summarized results
-- Use popular quick-search buttons
+- Use popular quick-search buttons (includes flights from your origin)
 
 ### 7. Packing List (Tab 5)
 - Check off items as you pack

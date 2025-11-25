@@ -77,8 +77,11 @@ st.markdown("Plan your perfect trip with ease!")
 with st.sidebar:
     st.header("📋 Trip Details")
     
+    # Origin
+    origin = st.text_input("Traveling From", placeholder="e.g., Mumbai, India")
+    
     # Destination
-    destination = st.text_input("Destination", placeholder="e.g., Paris, France")
+    destination = st.text_input("Traveling To (Destination)", placeholder="e.g., Paris, France")
     
     # Date selection
     col1, col2 = st.columns(2)
@@ -100,7 +103,7 @@ with st.sidebar:
     
     # Budget
     st.subheader("💰 Budget Planning")
-    currency = st.selectbox("Currency", ["USD", "EUR", "GBP", "JPY", "AUD", "CAD"])
+    currency = st.selectbox("Currency", ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD"])
     total_budget = st.number_input(f"Total Budget ({currency})", min_value=0.0, value=1000.0, step=100.0)
     
     if duration > 0:
@@ -128,6 +131,7 @@ with tab1:
     else:
         # Get current trip context
         trip_context = {
+            'origin': origin if origin else '',
             'destination': destination if destination else '',
             'start_date': start_date.isoformat() if 'start_date' in locals() else '',
             'end_date': end_date.isoformat() if 'end_date' in locals() else '',
@@ -217,6 +221,21 @@ with tab1:
                             st.markdown(f"**Accommodation:**\n{value.get('accommodation', '')}")
                             st.divider()
                             st.markdown(f"**Budget Plan:**\n{value.get('budget_plan', '')}")
+                            
+                            st.divider()
+                            st.markdown("### 📌 Apply This Plan")
+                            st.info("Would you like to apply this AI-generated plan to your itinerary and budget tabs?")
+                            
+                            col_yes, col_no = st.columns(2)
+                            with col_yes:
+                                if st.button("✅ Yes, Apply Plan", use_container_width=True, key="apply_plan"):
+                                    # Store the plan for later parsing
+                                    st.session_state.pending_plan_application = value
+                                    st.success("✅ Plan will be applied! Go to the Itinerary and Budget tabs to see the details.")
+                                    st.info("💡 Note: You can manually add activities from the plan to your itinerary in the next tab.")
+                            with col_no:
+                                if st.button("❌ No, Just View", use_container_width=True, key="skip_plan"):
+                                    st.info("Plan saved for reference. You can manually add items as needed.")
                 elif key == 'tips':
                     with st.expander("💡 Destination Tips & Recommendations"):
                         st.markdown(value)
@@ -227,6 +246,14 @@ with tab1:
 # Tab 2: Itinerary Builder (keeping original functionality)
 with tab2:
     st.header("Daily Itinerary")
+    
+    # Show AI-generated plan if available
+    if 'complete_plan' in st.session_state.ai_recommendations:
+        with st.expander("🤖 View AI-Generated Itinerary Plan", expanded=False):
+            plan = st.session_state.ai_recommendations['complete_plan']
+            if isinstance(plan, dict):
+                st.markdown(plan.get('itinerary', 'No itinerary available'))
+                st.info("💡 Use the form below to manually add activities from this plan to your itinerary.")
     
     if destination:
         # Add activity form
@@ -294,6 +321,13 @@ with tab2:
 with tab3:
     st.header("Budget Analysis")
     
+    # Show AI-generated budget plan if available
+    if 'complete_plan' in st.session_state.ai_recommendations:
+        with st.expander("🤖 View AI-Generated Budget Plan", expanded=False):
+            plan = st.session_state.ai_recommendations['complete_plan']
+            if isinstance(plan, dict):
+                st.markdown(plan.get('budget_plan', 'No budget plan available'))
+    
     if destination and total_budget > 0:
         # Calculate spent amount
         total_spent = sum(activity['cost'] for activity in st.session_state.itinerary)
@@ -353,6 +387,17 @@ with tab3:
 with tab4:
     st.header("✈️ AI-Powered Travel Search")
     
+    # Show AI-generated travel options if available
+    if 'complete_plan' in st.session_state.ai_recommendations:
+        with st.expander("🤖 View AI-Generated Travel & Accommodation Options", expanded=False):
+            plan = st.session_state.ai_recommendations['complete_plan']
+            if isinstance(plan, dict):
+                st.markdown("**Flight Options:**")
+                st.markdown(plan.get('travel_options', 'No travel options available'))
+                st.divider()
+                st.markdown("**Accommodation Options:**")
+                st.markdown(plan.get('accommodation', 'No accommodation options available'))
+    
     if not st.session_state.orchestrator:
         st.warning("⚠️ Please initialize the AI system to use search features.")
     else:
@@ -368,12 +413,14 @@ with tab4:
         
         if search_button and search_query:
             trip_context = {
+                'origin': origin if origin else '',
                 'destination': destination if destination else '',
                 'start_date': start_date.isoformat() if 'start_date' in locals() else '',
                 'end_date': end_date.isoformat() if 'end_date' in locals() else '',
                 'duration': duration if 'duration' in locals() else 0,
                 'travelers': travelers if 'travelers' in locals() else 1,
                 'budget': total_budget if 'total_budget' in locals() else 0,
+                'currency': currency if 'currency' in locals() else 'USD',
                 'search_type': search_type.lower(),
                 'query': search_query
             }
@@ -397,9 +444,13 @@ with tab4:
                 f"Transportation options in {destination}"
             ]
             
+            if origin:
+                quick_searches.insert(0, f"Flights from {origin} to {destination}")
+            
             for search in quick_searches:
                 if st.button(search, key=f"quick_{search}"):
                     trip_context = {
+                        'origin': origin if origin else '',
                         'destination': destination,
                         'query': search
                     }
