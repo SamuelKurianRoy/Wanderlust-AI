@@ -27,7 +27,20 @@ if 'ai_recommendations' not in st.session_state:
 
 # Initialize AI Orchestrator
 def init_orchestrator():
-    api_key = os.getenv('GEMINI_API_KEY')
+    # Try Streamlit secrets first (for deployment), then fall back to environment variables (for local dev)
+    api_key = None
+    
+    # Check Streamlit secrets
+    try:
+        if hasattr(st, 'secrets') and 'GEMINI_API_KEY' in st.secrets:
+            api_key = st.secrets['GEMINI_API_KEY']
+    except:
+        pass
+    
+    # Fall back to environment variable
+    if not api_key:
+        api_key = os.getenv('GEMINI_API_KEY')
+    
     if api_key and not st.session_state.orchestrator:
         try:
             st.session_state.orchestrator = GeminiOrchestrator(api_key)
@@ -45,8 +58,20 @@ st.markdown("**Powered by Multi-Agent AI & Google Gemini** - Your intelligent tr
 # API Key setup in sidebar
 with st.sidebar:
     st.header("🔑 API Configuration")
+    
+    # Get default API key from secrets or env
+    default_api_key = ""
+    try:
+        if hasattr(st, 'secrets') and 'GEMINI_API_KEY' in st.secrets:
+            default_api_key = st.secrets['GEMINI_API_KEY']
+    except:
+        pass
+    
+    if not default_api_key:
+        default_api_key = os.getenv('GEMINI_API_KEY', '')
+    
     api_key_input = st.text_input("Google Gemini API Key", type="password", 
-                                   value=os.getenv('GEMINI_API_KEY', ''),
+                                   value=default_api_key,
                                    help="Enter your Gemini API key to enable AI features")
     
     if api_key_input:

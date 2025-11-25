@@ -40,14 +40,28 @@ cd "Wanderlust Agent"
 pip install -r requirements.txt
 ```
 
-3. **Set up environment variables**:
-```bash
-# Copy the example file
-cp .env.example .env
+3. **Set up API Key** (Choose one method):
 
-# Edit .env and add your Gemini API key
-GEMINI_API_KEY=your_actual_api_key_here
-```
+   **Option A: Streamlit Secrets (Recommended for deployment)**
+   ```bash
+   # Create .streamlit directory if it doesn't exist
+   mkdir .streamlit
+   
+   # Copy the example file
+   cp .streamlit/secrets.toml.example .streamlit/secrets.toml
+   
+   # Edit .streamlit/secrets.toml and add your Gemini API key
+   GEMINI_API_KEY = "your_actual_api_key_here"
+   ```
+
+   **Option B: Environment Variables (Alternative for local dev)**
+   ```bash
+   # Copy the example file
+   cp .env.example .env
+   
+   # Edit .env and add your Gemini API key
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
 
 ## 🎯 Running the App
 
@@ -56,6 +70,20 @@ streamlit run app.py
 ```
 
 The app will open in your browser at `http://localhost:8501`
+
+## ☁️ Deploying to Streamlit Cloud
+
+1. **Push your code to GitHub** (without secrets)
+2. **Go to [Streamlit Cloud](https://share.streamlit.io/)**
+3. **Deploy your app**
+4. **Add secrets in the app settings**:
+   - Go to your app's settings
+   - Navigate to "Secrets" section
+   - Add your secrets in TOML format:
+   ```toml
+   GEMINI_API_KEY = "your_actual_api_key_here"
+   ```
+5. **Your app will automatically use the secrets!**
 
 ## 💡 How to Use
 
@@ -162,9 +190,10 @@ User Interface
 
 ## 🔐 Security Notes
 
-- Never commit your `.env` file with real API keys
-- Keep your Gemini API key secure
-- The `.env` file is already in `.gitignore`
+- **Never commit secrets**: Both `.env` and `.streamlit/secrets.toml` are in `.gitignore`
+- **Keep your API key secure**: Don't share it publicly
+- **Use Streamlit Secrets for deployment**: More secure than environment variables
+- **Rotate keys regularly**: Generate new API keys periodically for security
 
 ## 🎨 Customization
 
