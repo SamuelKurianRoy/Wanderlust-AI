@@ -495,10 +495,71 @@ with tab5:
             'Electronics': ['Camera', 'Laptop/Tablet', 'Adapters', 'Power bank']
         }
     
+    # Add/Remove items section
+    st.subheader("✏️ Manage Packing List")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**➕ Add New Item**")
+        new_category = st.selectbox("Category", list(st.session_state.packing_list.keys()) + ["New Category"])
+        
+        if new_category == "New Category":
+            new_category_name = st.text_input("Enter new category name", placeholder="e.g., Sports Gear")
+            new_item = st.text_input("Item name", placeholder="e.g., Running shoes", key="new_item_add")
+            
+            if st.button("Add New Category & Item", type="primary", use_container_width=True):
+                if new_category_name and new_item:
+                    if new_category_name not in st.session_state.packing_list:
+                        st.session_state.packing_list[new_category_name] = []
+                    st.session_state.packing_list[new_category_name].append(new_item)
+                    st.success(f"✅ Added '{new_item}' to '{new_category_name}'")
+                    st.rerun()
+                else:
+                    st.warning("Please fill in both category and item name!")
+        else:
+            new_item = st.text_input("Item name", placeholder="e.g., Sunscreen", key="new_item_input")
+            
+            if st.button("Add Item", type="primary", use_container_width=True):
+                if new_item:
+                    st.session_state.packing_list[new_category].append(new_item)
+                    st.success(f"✅ Added '{new_item}' to {new_category}")
+                    st.rerun()
+                else:
+                    st.warning("Please enter an item name!")
+    
+    with col2:
+        st.markdown("**❌ Remove Item**")
+        remove_category = st.selectbox("Select category", list(st.session_state.packing_list.keys()), key="remove_cat")
+        
+        if remove_category and st.session_state.packing_list[remove_category]:
+            remove_item = st.selectbox("Select item to remove", st.session_state.packing_list[remove_category], key="remove_item")
+            
+            if st.button("Remove Item", type="secondary", use_container_width=True):
+                st.session_state.packing_list[remove_category].remove(remove_item)
+                st.success(f"✅ Removed '{remove_item}' from {remove_category}")
+                st.rerun()
+        else:
+            st.info("This category has no items to remove.")
+    
+    st.divider()
+    
+    # Display packing list with checkboxes
+    st.subheader("📋 Your Packing List")
+    
     for category, items in st.session_state.packing_list.items():
         with st.expander(f"📦 {category}", expanded=True):
-            for item in items:
-                st.checkbox(item, key=f"pack_{category}_{item}")
+            if items:
+                for idx, item in enumerate(items):
+                    col1, col2 = st.columns([4, 1])
+                    with col1:
+                        st.checkbox(item, key=f"pack_{category}_{item}")
+                    with col2:
+                        if st.button("🗑️", key=f"quick_del_{category}_{idx}", help="Delete this item"):
+                            st.session_state.packing_list[category].pop(idx)
+                            st.rerun()
+            else:
+                st.caption("No items in this category yet.")
 
 # Tab 6: Notes
 with tab6:
