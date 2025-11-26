@@ -61,26 +61,47 @@ with st.sidebar:
     
     # Get default API key from secrets or env
     default_api_key = ""
+    using_secrets = False
+    
     try:
         if hasattr(st, 'secrets') and 'GEMINI_API_KEY' in st.secrets:
             default_api_key = st.secrets['GEMINI_API_KEY']
+            using_secrets = True
     except:
         pass
     
     if not default_api_key:
         default_api_key = os.getenv('GEMINI_API_KEY', '')
     
-    api_key_input = st.text_input("Google Gemini API Key", type="password", 
-                                   value=default_api_key,
-                                   help="Enter your Gemini API key to enable AI features")
+    # Show status and option to use custom key
+    if using_secrets:
+        st.success("✅ API Key configured via Streamlit Secrets")
+        
+        # Option to use custom API key
+        use_custom = st.checkbox("Use my own API key instead", key="use_custom_key")
+        
+        if use_custom:
+            api_key_input = st.text_input("Enter your Gemini API Key", type="password", 
+                                         help="Enter your own Gemini API key to override the default")
+            if api_key_input:
+                os.environ['GEMINI_API_KEY'] = api_key_input
+                st.info("🔄 Using your custom API key")
+        else:
+            st.caption("Using API key from deployment configuration")
+    else:
+        # No secrets configured, show input field
+        api_key_input = st.text_input("Google Gemini API Key", type="password", 
+                                       value=default_api_key,
+                                       help="Enter your Gemini API key to enable AI features")
+        
+        if api_key_input:
+            os.environ['GEMINI_API_KEY'] = api_key_input
     
-    if api_key_input:
-        os.environ['GEMINI_API_KEY'] = api_key_input
-        if st.button("Initialize AI System"):
-            if init_orchestrator():
-                st.success("✅ AI System Initialized!")
-            else:
-                st.error("❌ Failed to initialize AI")
+    if st.button("Initialize AI System"):
+        if init_orchestrator():
+            st.success("✅ AI System Initialized!")
+        else:
+            st.error("❌ Failed to initialize AI")
     
     st.divider()
     
