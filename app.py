@@ -270,18 +270,20 @@ with tab1:
                             
                             st.divider()
                             st.markdown("### 📌 Apply This Plan")
-                            st.info("Would you like to apply this AI-generated plan to your itinerary and budget tabs?")
+                            st.info("Would you like to load this AI-generated plan into editable forms across tabs?")
                             
                             col_yes, col_no = st.columns(2)
                             with col_yes:
-                                if st.button("✅ Yes, Apply Plan", use_container_width=True, key="apply_plan"):
-                                    # Store the plan for later parsing
-                                    st.session_state.pending_plan_application = value
-                                    st.success("✅ Plan will be applied! Go to the Itinerary and Budget tabs to see the details.")
-                                    st.info("💡 Note: You can manually add activities from the plan to your itinerary in the next tab.")
+                                if st.button("✅ Yes, Load & Edit Plan", use_container_width=True, key="apply_plan"):
+                                    # Store the plan for editing
+                                    st.session_state.applied_plan = value
+                                    st.session_state.plan_loaded = True
+                                    st.success("✅ Plan loaded! Go to Itinerary, Budget, and Travel tabs to view and edit.")
+                                    st.info("💡 You can now customize each section - add, remove, or modify details.")
+                                    st.rerun()
                             with col_no:
                                 if st.button("❌ No, Just View", use_container_width=True, key="skip_plan"):
-                                    st.info("Plan saved for reference. You can manually add items as needed.")
+                                    st.info("Plan saved for reference only.")
                 elif key == 'tips':
                     with st.expander("💡 Destination Tips & Recommendations"):
                         st.markdown(value)
@@ -293,13 +295,54 @@ with tab1:
 with tab2:
     st.header("Daily Itinerary")
     
-    # Show AI-generated plan if available
-    if 'complete_plan' in st.session_state.ai_recommendations:
+    # Show AI-generated plan with option to edit
+    if 'applied_plan' in st.session_state and st.session_state.get('plan_loaded', False):
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.success("✅ AI-Generated Plan Loaded - You can now edit and customize!")
+        with col2:
+            if st.button("🗑️ Unload Plan", help="Remove loaded plan and start fresh", key="unload_plan"):
+                st.session_state.plan_loaded = False
+                if 'applied_plan' in st.session_state:
+                    del st.session_state.applied_plan
+                st.info("Plan unloaded. Starting fresh!")
+                st.rerun()
+        
+        with st.expander("📝 Edit AI-Generated Itinerary", expanded=True):
+            plan = st.session_state.applied_plan
+            if isinstance(plan, dict):
+                itinerary_text = plan.get('itinerary', '')
+                
+                # Editable text area for the itinerary
+                edited_itinerary = st.text_area(
+                    "Customize your itinerary:",
+                    value=itinerary_text,
+                    height=300,
+                    help="Edit the AI-generated itinerary. You can add, remove, or modify activities."
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("💾 Save Changes", type="primary", use_container_width=True):
+                        st.session_state.applied_plan['itinerary'] = edited_itinerary
+                        st.session_state.ai_recommendations['complete_plan']['itinerary'] = edited_itinerary
+                        st.success("✅ Itinerary updated!")
+                
+                with col2:
+                    if st.button("🔄 Reset to Original", type="secondary", use_container_width=True):
+                        # Keep original plan in a backup
+                        if 'original_plan' not in st.session_state:
+                            st.session_state.original_plan = st.session_state.ai_recommendations['complete_plan'].copy()
+                        st.session_state.applied_plan = st.session_state.original_plan.copy()
+                        st.rerun()
+                
+                st.info("💡 Use the form below to add structured activities to track costs.")
+    elif 'complete_plan' in st.session_state.ai_recommendations:
         with st.expander("🤖 View AI-Generated Itinerary Plan", expanded=False):
             plan = st.session_state.ai_recommendations['complete_plan']
             if isinstance(plan, dict):
                 st.markdown(plan.get('itinerary', 'No itinerary available'))
-                st.info("💡 Use the form below to manually add activities from this plan to your itinerary.")
+                st.info("💡 Click 'Yes, Load & Edit Plan' in the AI Assistant tab to load this plan for editing.")
     
     if destination:
         # Add activity form
@@ -367,12 +410,44 @@ with tab2:
 with tab3:
     st.header("Budget Analysis")
     
-    # Show AI-generated budget plan if available
-    if 'complete_plan' in st.session_state.ai_recommendations:
+    # Show AI-generated budget plan with option to edit
+    if 'applied_plan' in st.session_state and st.session_state.get('plan_loaded', False):
+        st.success("✅ AI-Generated Budget Plan Loaded - You can now edit!")
+        
+        with st.expander("📝 Edit AI-Generated Budget Plan", expanded=True):
+            plan = st.session_state.applied_plan
+            if isinstance(plan, dict):
+                budget_text = plan.get('budget_plan', '')
+                
+                # Editable text area for the budget plan
+                edited_budget = st.text_area(
+                    "Customize your budget plan:",
+                    value=budget_text,
+                    height=300,
+                    help="Edit the AI-generated budget breakdown. Modify allocations, add notes, etc."
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("💾 Save Budget Changes", type="primary", use_container_width=True, key="save_budget"):
+                        st.session_state.applied_plan['budget_plan'] = edited_budget
+                        st.session_state.ai_recommendations['complete_plan']['budget_plan'] = edited_budget
+                        st.success("✅ Budget plan updated!")
+                
+                with col2:
+                    if st.button("🔄 Reset Budget", type="secondary", use_container_width=True, key="reset_budget"):
+                        if 'original_plan' not in st.session_state:
+                            st.session_state.original_plan = st.session_state.ai_recommendations['complete_plan'].copy()
+                        st.session_state.applied_plan['budget_plan'] = st.session_state.original_plan.get('budget_plan', '')
+                        st.rerun()
+                
+                st.info("💡 Track your actual spending below with manual entries.")
+    elif 'complete_plan' in st.session_state.ai_recommendations:
         with st.expander("🤖 View AI-Generated Budget Plan", expanded=False):
             plan = st.session_state.ai_recommendations['complete_plan']
             if isinstance(plan, dict):
                 st.markdown(plan.get('budget_plan', 'No budget plan available'))
+                st.info("💡 Click 'Yes, Load & Edit Plan' in the AI Assistant tab to load this plan for editing.")
     
     if destination and total_budget > 0:
         # Calculate spent amount
@@ -433,8 +508,67 @@ with tab3:
 with tab4:
     st.header("✈️ AI-Powered Travel Search")
     
-    # Show AI-generated travel options if available
-    if 'complete_plan' in st.session_state.ai_recommendations:
+    # Show AI-generated travel options with option to edit
+    if 'applied_plan' in st.session_state and st.session_state.get('plan_loaded', False):
+        st.success("✅ AI-Generated Travel Plan Loaded - You can now edit!")
+        
+        with st.expander("📝 Edit Flight Options", expanded=True):
+            plan = st.session_state.applied_plan
+            if isinstance(plan, dict):
+                travel_text = plan.get('travel_options', '')
+                
+                edited_travel = st.text_area(
+                    "Customize flight options:",
+                    value=travel_text,
+                    height=200,
+                    help="Edit flight recommendations, add notes about airlines, routes, etc.",
+                    key="edit_flights"
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("💾 Save Flight Changes", type="primary", use_container_width=True, key="save_flights"):
+                        st.session_state.applied_plan['travel_options'] = edited_travel
+                        st.session_state.ai_recommendations['complete_plan']['travel_options'] = edited_travel
+                        st.success("✅ Flight options updated!")
+                
+                with col2:
+                    if st.button("🔄 Reset Flights", type="secondary", use_container_width=True, key="reset_flights"):
+                        if 'original_plan' not in st.session_state:
+                            st.session_state.original_plan = st.session_state.ai_recommendations['complete_plan'].copy()
+                        st.session_state.applied_plan['travel_options'] = st.session_state.original_plan.get('travel_options', '')
+                        st.rerun()
+        
+        with st.expander("📝 Edit Accommodation Options", expanded=True):
+            plan = st.session_state.applied_plan
+            if isinstance(plan, dict):
+                accommodation_text = plan.get('accommodation', '')
+                
+                edited_accommodation = st.text_area(
+                    "Customize accommodation options:",
+                    value=accommodation_text,
+                    height=200,
+                    help="Edit hotel recommendations, add preferences, modify options, etc.",
+                    key="edit_hotels"
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("💾 Save Hotel Changes", type="primary", use_container_width=True, key="save_hotels"):
+                        st.session_state.applied_plan['accommodation'] = edited_accommodation
+                        st.session_state.ai_recommendations['complete_plan']['accommodation'] = edited_accommodation
+                        st.success("✅ Accommodation options updated!")
+                
+                with col2:
+                    if st.button("🔄 Reset Hotels", type="secondary", use_container_width=True, key="reset_hotels"):
+                        if 'original_plan' not in st.session_state:
+                            st.session_state.original_plan = st.session_state.ai_recommendations['complete_plan'].copy()
+                        st.session_state.applied_plan['accommodation'] = st.session_state.original_plan.get('accommodation', '')
+                        st.rerun()
+        
+        st.info("💡 Use the search below to find more options.")
+    
+    elif 'complete_plan' in st.session_state.ai_recommendations:
         with st.expander("🤖 View AI-Generated Travel & Accommodation Options", expanded=False):
             plan = st.session_state.ai_recommendations['complete_plan']
             if isinstance(plan, dict):
@@ -443,6 +577,7 @@ with tab4:
                 st.divider()
                 st.markdown("**Accommodation Options:**")
                 st.markdown(plan.get('accommodation', 'No accommodation options available'))
+                st.info("💡 Click 'Yes, Load & Edit Plan' in the AI Assistant tab to load this plan for editing.")
     
     if not st.session_state.orchestrator:
         st.warning("⚠️ Please initialize the AI system to use search features.")
